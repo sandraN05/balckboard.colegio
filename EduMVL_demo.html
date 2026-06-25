@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduMVL — Sistema Educativo Digital</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --azul:       #1a3c6e;
+    --azul-med:   #2457a4;
+    --azul-light: #e8f0fb;
+    --verde:      #1e7e34;
+    --verde-light:#d4edda;
+    --naranja:    #e67e22;
+    --naranja-light:#fef3e2;
+    --rojo:       #c0392b;
+    --rojo-light: #fde8e8;
+    --gris-bg:    #f4f6fa;
+    --gris-card:  #ffffff;
+    --gris-borde: #e0e6ef;
+    --texto:      #1a2236;
+    --texto-sub:  #6b7a99;
+    --sidebar-w:  240px;
+  }
+
+  body { font-family: 'Inter', sans-serif; background: var(--gris-bg); color: var(--texto); min-height: 100vh; }
+
+  /* ======= PANTALLAS ======= */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* ======= NAV DEMO ======= */
+  .demo-nav {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--azul); border-radius: 50px; padding: 10px 20px;
+    display: flex; gap: 8px; z-index: 9999; box-shadow: 0 8px 32px rgba(26,60,110,0.35);
+  }
+  .demo-nav button {
+    background: transparent; border: 1.5px solid rgba(255,255,255,0.3);
+    color: #fff; padding: 6px 14px; border-radius: 30px;
+    font-size: 12px; font-family: 'Inter', sans-serif; cursor: pointer;
+    transition: all .2s;
+  }
+  .demo-nav button:hover, .demo-nav button.active { background: #fff; color: var(--azul); font-weight: 600; }
+
+  /* ======= LOGIN ======= */
+  #login {
+    background: linear-gradient(135deg, #1a3c6e 0%, #2457a4 50%, #1a3c6e 100%);
+    align-items: center; justify-content: center; flex-direction: column;
+    position: relative; overflow: hidden;
+  }
+  #login::before {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .login-card {
+    background: #fff; border-radius: 20px; padding: 48px 40px;
+    width: 100%; max-width: 420px; box-shadow: 0 24px 64px rgba(0,0,0,0.25);
+    position: relative; z-index: 1;
+  }
+  .login-logo {
+    text-align: center; margin-bottom: 32px;
+  }
+  .login-logo .logo-icon {
+    width: 64px; height: 64px; background: var(--azul);
+    border-radius: 16px; display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+  }
+  .login-logo .logo-icon svg { width: 36px; height: 36px; fill: #fff; }
+  .login-logo h1 { font-family: 'Poppins', sans-serif; font-size: 26px; color: var(--azul); letter-spacing: -0.5px; }
+  .login-logo p { font-size: 13px; color: var(--texto-sub); margin-top: 4px; }
+  .field-group { margin-bottom: 18px; }
+  .field-group label { display: block; font-size: 13px; font-weight: 500; color: var(--texto); margin-bottom: 6px; }
+  .field-group input, .field-group select {
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--gris-borde);
+    border-radius: 10px; font-size: 14px; font-family: 'Inter', sans-serif;
+    color: var(--texto); background: var(--gris-bg); transition: border .2s;
+    outline: none;
+  }
+  .field-group input:focus, .field-group select:focus { border-color: var(--azul-med); background: #fff; }
+  .btn-login {
+    width: 100%; padding: 13px; background: var(--azul);
+    color: #fff; border: none; border-radius: 10px; font-size: 15px;
+    font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer;
+    margin-top: 8px; transition: background .2s;
+  }
+  .btn-login:hover { background: var(--azul-med); }
+  .colegio-badge {
+    text-align: center; margin-top: 24px; padding-top: 20px;
+    border-top: 1px solid var(--gris-borde);
+    font-size: 12px; color: var(--texto-sub);
+  }
+
+  /* ======= LAYOUT DASHBOARD ======= */
+  #profe, #alumno, #admin { flex-direction: row; }
+
+  .sidebar {
+    width: var(--sidebar-w); min-height: 100vh; background: var(--azul);
+    display: flex; flex-direction: column; padding: 0; flex-shrink: 0;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .sidebar-logo {
+    padding: 24px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .sidebar-logo span {
+    font-family: 'Poppins', sans-serif; font-size: 20px; color: #fff; font-weight: 700;
+  }
+  .sidebar-logo small { display: block; font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+  .sidebar-user {
+    padding: 16px 20px; display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%; background: var(--azul-med);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .sidebar-user-info strong { display: block; font-size: 13px; color: #fff; font-weight: 600; }
+  .sidebar-user-info span { font-size: 11px; color: rgba(255,255,255,0.55); }
+  .sidebar-menu { flex: 1; padding: 12px 0; overflow-y: auto; }
+  .menu-label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.35);
+    text-transform: uppercase; letter-spacing: 1px; padding: 12px 20px 4px; }
+  .menu-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+    color: rgba(255,255,255,0.7); font-size: 13.5px; cursor: pointer;
+    border-left: 3px solid transparent; transition: all .15s;
+  }
+  .menu-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+  .menu-item.active { background: rgba(255,255,255,0.12); color: #fff;
+    border-left-color: #fff; font-weight: 600; }
+  .menu-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .sidebar-bottom { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .btn-salir {
+    display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.55);
+    font-size: 13px; cursor: pointer; background: none; border: none;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-salir:hover { color: #fff; }
+
+  /* MAIN */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    background: #fff; padding: 16px 28px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 1px solid var(--gris-borde);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar h2 { font-size: 18px; font-weight: 700; color: var(--texto); }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .notif-btn {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--gris-bg);
+    border: 1.5px solid var(--gris-borde); display: flex; align-items: center;
+    justify-content: center; cursor: pointer; position: relative;
+  }
+  .notif-dot {
+    width: 8px; height: 8px; background: var(--naranja); border-radius: 50%;
+    position: absolute; top: 4px; right: 4px; border: 2px solid #fff;
+  }
+  .content { flex: 1; padding: 28px; overflow-y: auto; }
+
+  /* CARDS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: #fff; border-radius: 14px; padding: 20px;
+    border: 1px solid var(--gris-borde); display: flex; flex-direction: column; gap: 8px;
+  }
+  .stat-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stat-icon svg { width: 20px; height: 20px; }
+  .stat-icon.azul { background: var(--azul-light); }
+  .stat-icon.azul svg { fill: var(--azul-med); }
+  .stat-icon.verde { background: var(--verde-light); }
+  .stat-icon.verde svg { fill: var(--verde); }
+  .stat-icon.naranja { background: var(--naranja-light); }
+  .stat-icon.naranja svg { fill: var(--naranja); }
+  .stat-icon.rojo { background: var(--rojo-light); }
+  .stat-icon.rojo svg { fill: var(--rojo); }
+  .stat-val { font-size: 28px; font-weight: 700; color: var(--texto); line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--texto-sub); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+  .card {
+    background: #fff; border-radius: 14px; border: 1px solid var(--gris-borde); overflow: hidden;
+  }
+  .card-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--gris-borde);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-header h3 { font-size: 14px; font-weight: 600; color: var(--texto); }
+  .card-header a { font-size: 12px; color: var(--azul-med); text-decoration: none; font-weight: 500; }
+  .card-body { padding: 16px 20px; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px; color: var(--texto-sub);
+    background: var(--gris-bg); border-bottom: 1px solid var(--gris-borde); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--gris-borde); color: var(--texto); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fafd; }
+
+  /* BADGES */
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .badge-verde { background: var(--verde-light); color: var(--verde); }
+  .badge-rojo { background: var(--rojo-light); color: var(--rojo); }
+  .badge-naranja { background: var(--naranja-light); color: #a05000; }
+  .badge-azul { background: var(--azul-light); color: var(--azul-med); }
+  .badge-gris { background: #f0f0f0; color: #666; }
+
+  /* ASISTENCIA */
+  .asist-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--gris-borde); }
+  .asist-row:last-child { border-bottom: none; }
+  .asist-alumno { display: flex; align-items: center; gap: 10px; }
+  .asist-av { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; }
+  .asist-btns { display: flex; gap: 6px; }
+  .asist-btn {
+    padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    border: 1.5px solid; cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+  .asist-btn.p { border-color: var(--verde); color: var(--verde); background: var(--verde-light); }
+  .asist-btn.f { border-color: var(--rojo); color: var(--rojo); background: #fff; }
+  .asist-btn.t { border-color: var(--naranja); color: var(--naranja); background: #fff; }
+
+  /* TAREAS CARD */
+  .tarea-item { padding: 12px 0; border-bottom: 1px solid var(--gris-borde); }
+  .tarea-item:last-child { border-bottom: none; }
+  .tarea-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .tarea-titulo { font-size: 13px; font-weight: 600; color: var(--texto); }
+  .tarea-meta { font-size: 11px; color: var(--texto-sub); }
+  .progress-bar { height: 6px; background: var(--gris-borde); border-radius: 3px; margin-top: 6px; }
+  .progress-fill { height: 100%; border-radius: 3px; background: var(--azul-med); }
+
+  /* CURSOS ALUMNO */
+  .curso-card {
+    background: #fff; border-radius: 12px; border: 1px solid var(--gris-borde);
+    overflow: hidden; transition: box-shadow .2s;
+  }
+  .curso-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .curso-banner { height: 6px; }
+  .curso-body { padding: 16px; }
+  .curso-icono { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+  .curso-nombre { font-size: 14px; font-weight: 600; color: var(--texto); margin-bottom: 4px; }
+  .curso-prof { font-size: 12px; color: var(--texto-sub); margin-bottom: 12px; }
+  .curso-prog-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--texto-sub); margin-bottom: 4px; }
+
+  /* PENDIENTES */
+  .pendiente-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--gris-borde); align-items: flex-start; }
+  .pendiente-item:last-child { border-bottom: none; }
+  .pendiente-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .pendiente-titulo { font-size: 13px; font-weight: 500; color: var(--texto); }
+  .pendiente-meta { font-size: 11px; color: var(--texto-sub); margin-top: 2px; }
+
+  /* ADMIN */
+  .users-table-wrap { overflow-x: auto; }
+  .action-btn { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; border: 1.5px solid; cursor: pointer; font-family: 'Inter', sans-serif; background: #fff; }
+  .action-btn.edit { border-color: var(--azul-med); color: var(--azul-med); }
+  .action-btn.del { border-color: var(--rojo); color: var(--rojo); }
+  .btn-nuevo {
+    padding: 8px 16px; background: var(--azul); color: #fff; border: none;
+    border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 6px;
+  }
+
+  /* NOTAS */
+  .notas-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .nota-box { background: var(--gris-bg); border-radius: 10px; padding: 14px; text-align: center; }
+  .nota-curso { font-size: 11px; color: var(--texto-sub); margin-bottom: 6px; font-weight: 500; }
+  .nota-val { font-size: 26px; font-weight: 700; }
+  .nota-estado { font-size: 11px; margin-top: 4px; font-weight: 600; }
+  .nota-aprobado { color: var(--verde); }
+  .nota-riesgo { color: var(--naranja); }
+</style>
+</head>
+<body>
+
+<!-- ====== LOGIN ====== -->
+<div id="login" class="screen active">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>
+      </div>
+      <h1>EduMVL</h1>
+      <p>I.E.P. Mario Vargas Llosa · Arequipa</p>
+    </div>
+    <div class="field-group">
+      <label>Correo institucional</label>
+      <input type="email" value="director@mariovargasllosa.edu.pe" readonly>
+    </div>
+    <div class="field-group">
+      <label>Contraseña</label>
+      <input type="password" value="••••••••" readonly>
+    </div>
+    <div class="field-group">
+      <label>Ingresar como</label>
+      <select>
+        <option>Profesor</option>
+        <option>Estudiante</option>
+        <option>Administrador</option>
+      </select>
+    </div>
+    <button class="btn-login" onclick="showScreen('profe')">Ingresar al sistema</button>
+    <div class="colegio-badge">🔒 Acceso exclusivo para personal y alumnos matriculados</div>
+  </div>
+</div>
+
+<!-- ====== DASHBOARD PROFESOR ====== -->
+<div id="profe" class="screen">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span>EduMVL</span>
+      <small>Panel del Profesor</small>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar">MR</div>
+      <div class="sidebar-user-info">
+        <strong>Prof. María Ríos</strong>
+        <span>Matemática · 4°A, 4°B, 5°A</span>
+      </div>
+    </div>
+    <nav class="sidebar-menu">
+      <div class="menu-label">Principal</div>
+      <div class="menu-item active">
+        <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/></svg>
+        Inicio
+      </div>
+      <div class="menu-item">
+        <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z" fill="currentColor"/></svg>
+        Asistencia
+      </div>
+      <div class="menu-item">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" fill="currentColor"/></svg>
+        Tareas y Exámenes
+      </div>
+      <div class="menu-item">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" fill="currentColor"/></svg>
+        Notas y Promedios
+      </div>
+      <div class="menu-label">Comunicación</div>
+      <div class="menu-item">
+        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="currentColor"/></svg>
+        Notificaciones
+        <span style="margin-left:auto;background:var(--naranja);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;">3</span>
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-salir" onclick="showScreen('login')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <h2>Buenos días, Prof. María 👋</h2>
+      <div class="topbar-right">
+        <div class="notif-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--texto-sub)"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg><div class="notif-dot"></div></div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon azul"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
+          <div class="stat-val">87</div>
+          <div class="stat-label">Alumnos totales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon verde"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+          <div class="stat-val">79</div>
+          <div class="stat-label">Presentes hoy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon naranja"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg></div>
+          <div class="stat-val">5</div>
+          <div class="stat-label">Tareas activas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon rojo"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>
+          <div class="stat-val">4</div>
+          <div class="stat-label">Alumnos en riesgo</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Asistencia hoy -->
+        <div class="card">
+          <div class="card-header">
+            <h3>📋 Asistencia de hoy — 4°A</h3>
+            <a href="#">Ver historial</a>
+          </div>
+          <div class="card-body">
+            <div class="asist-row">
+              <div class="asist-alumno">
+                <div class="asist-av" style="background:#2457a4">AL</div>
+                <div>
+                  <div style="font-size:13px;font-weight:600">Adriana Llerena</div>
+                  <div style="font-size:11px;color:var(--texto-sub)">N° 01</div>
+                </div>
+              </div>
+              <div class="asist-btns">
+                <button class="asist-btn p">✓ Presente</button>
+                <button class="asist-btn f">✗ Falta</button>
+                <button class="asist-btn t">⏰ Tarde</button>
+              </div>
+            </div>
+            <div class="asist-row">
+              <div class="asist-alumno">
+                <div class="asist-av" style="background:#1e7e34">BQ</div>
+                <div>
+                  <div style="font-size:13px;font-weight:600">Bruno Quispe</div>
+                  <div style="font-size:11px;color:var(--texto-sub)">N° 02</div>
+                </div>
+              </div>
+              <div class="asist-btns">
+                <button class="asist-btn p">✓ Presente</button>
+                <button class="asist-btn f">✗ Falta</button>
+                <button class="asist-btn t">⏰ Tarde</button>
+              </div>
+            </div>
+            <div class="asist-row">
+              <div class="asist-alumno">
+                <div class="asist-av" style="background:#c0392b">CM</div>
+                <div>
+                  <div style="font-size:13px;font-weight:600">Camila Mamani</div>
+                  <div style="font-size:11px;color:var(--texto-sub)">N° 03</div>
+                </div>
+              </div>
+              <div class="asist-btns">
+                <button class="asist-btn p">✓ Presente</button>
+                <button class="asist-btn f">✗ Falta</button>
+                <button class="asist-btn t">⏰ Tarde</button>
+              </div>
+            </div>
+            <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--texto-sub)">+ 26 alumnos más</div>
+          </div>
+        </div>
+
+        <!-- Tareas recientes -->
+        <div class="card">
+          <div class="card-header">
+            <h3>📝 Tareas activas</h3>
+            <a href="#">Nueva tarea</a>
+          </div>
+          <div class="card-body">
+            <div class="tarea-item">
+              <div class="tarea-top">
+                <div class="tarea-titulo">Práctica — Ecuaciones cuadráticas</div>
+                <span class="badge badge-naranja">Vence hoy</span>
+              </div>
+              <div class="tarea-meta">4°A · 18/29 entregas</div>
+              <div class="progress-bar"><div class="progress-fill" style="width:62%"></div></div>
+            </div>
+            <div class="tarea-item">
+              <div class="tarea-top">
+                <div class="tarea-titulo">Examen — Funciones y gráficas</div>
+                <span class="badge badge-azul">En 3 días</span>
+              </div>
+              <div class="tarea-meta">4°B · 0/31 entregas</div>
+              <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+            </div>
+            <div class="tarea-item">
+              <div class="tarea-top">
+                <div class="tarea-titulo">Tarea — Problemas de trigonometría</div>
+                <span class="badge badge-verde">Cerrada</span>
+              </div>
+              <div class="tarea-meta">5°A · 27/28 entregas · Promedio: 14.2</div>
+              <div class="progress-bar"><div class="progress-fill" style="width:96%;background:var(--verde)"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla notas -->
+      <div class="card">
+        <div class="card-header">
+          <h3>📊 Promedios del bimestre — 4°A · Matemática</h3>
+          <a href="#">Ver libreta completa</a>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table>
+            <thead><tr><th>Alumno</th><th>T1</th><th>T2</th><th>T3</th><th>Promedio</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>Adriana Llerena</td><td>16</td><td>17</td><td>15</td><td><b>16</b></td><td><span class="badge badge-verde">Aprobado</span></td></tr>
+              <tr><td>Bruno Quispe</td><td>11</td><td>10</td><td>09</td><td><b>10</b></td><td><span class="badge badge-naranja">En riesgo</span></td></tr>
+              <tr><td>Camila Mamani</td><td>18</td><td>19</td><td>18</td><td><b>18</b></td><td><span class="badge badge-verde">Aprobado</span></td></tr>
+              <tr><td>Diego Puma</td><td>08</td><td>07</td><td>09</td><td><b>08</b></td><td><span class="badge badge-rojo">Desaprobado</span></td></tr>
+              <tr><td>Elena Vargas</td><td>14</td><td>13</td><td>15</td><td><b>14</b></td><td><span class="badge badge-verde">Aprobado</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== DASHBOARD ALUMNO ====== -->
+<div id="alumno" class="screen">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span>EduMVL</span>
+      <small>Panel del Estudiante</small>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:#e67e22">CL</div>
+      <div class="sidebar-user-info">
+        <strong>Camila Llerena</strong>
+        <span>4°A · Turno mañana</span>
+      </div>
+    </div>
+    <nav class="sidebar-menu">
+      <div class="menu-label">Mi espacio</div>
+      <div class="menu-item active">
+        <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/></svg>
+        Inicio
+      </div>
+      <div class="menu-item">
+        <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z" fill="currentColor"/></svg>
+        Mis Cursos
+      </div>
+      <div class="menu-item">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" fill="currentColor"/></svg>
+        Tareas pendientes
+        <span style="margin-left:auto;background:var(--rojo);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;">2</span>
+      </div>
+      <div class="menu-item">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" fill="currentColor"/></svg>
+        Mis Notas
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-salir" onclick="showScreen('login')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <h2>Hola, Camila 👋</h2>
+      <div class="topbar-right">
+        <div class="notif-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--texto-sub)"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg><div class="notif-dot"></div></div>
+      </div>
+    </div>
+    <div class="content">
+
+      <!-- Alertas -->
+      <div style="background:var(--rojo-light);border:1.5px solid #f5c6cb;border-radius:12px;padding:14px 18px;margin-bottom:24px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:20px">⚠️</span>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--rojo)">Tienes 2 tareas por entregar hoy</div>
+          <div style="font-size:12px;color:#666;margin-top:2px">Práctica de Matemática y Resumen de Historia vencen a las 11:59 PM</div>
+        </div>
+      </div>
+
+      <!-- Mis cursos -->
+      <h3 style="font-size:14px;font-weight:700;color:var(--texto);margin-bottom:14px">Mis cursos</h3>
+      <div class="grid-3" style="margin-bottom:28px">
+        <div class="curso-card">
+          <div class="curso-banner" style="background:#2457a4"></div>
+          <div class="curso-body">
+            <div class="curso-icono" style="background:var(--azul-light)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--azul-med)"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg></div>
+            <div class="curso-nombre">Matemática</div>
+            <div class="curso-prof">Prof. María Ríos</div>
+            <div class="curso-prog-label"><span>Progreso bimestre</span><span style="font-weight:700;color:var(--azul-med)">16</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:80%"></div></div>
+          </div>
+        </div>
+        <div class="curso-card">
+          <div class="curso-banner" style="background:#1e7e34"></div>
+          <div class="curso-body">
+            <div class="curso-icono" style="background:var(--verde-light)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--verde)"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg></div>
+            <div class="curso-nombre">Comunicación</div>
+            <div class="curso-prof">Prof. Carlos Huanca</div>
+            <div class="curso-prog-label"><span>Promedio</span><span style="font-weight:700;color:var(--verde)">14</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:70%;background:var(--verde)"></div></div>
+          </div>
+        </div>
+        <div class="curso-card">
+          <div class="curso-banner" style="background:#e67e22"></div>
+          <div class="curso-body">
+            <div class="curso-icono" style="background:var(--naranja-light)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--naranja)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+            <div class="curso-nombre">Ciencia y Tecnología</div>
+            <div class="curso-prof">Prof. Rosa Ticona</div>
+            <div class="curso-prog-label"><span>Promedio</span><span style="font-weight:700;color:var(--naranja)">18</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:90%;background:var(--naranja)"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Pendientes -->
+        <div class="card">
+          <div class="card-header"><h3>📌 Tareas pendientes</h3></div>
+          <div class="card-body">
+            <div class="pendiente-item">
+              <div class="pendiente-dot" style="background:var(--rojo)"></div>
+              <div>
+                <div class="pendiente-titulo">Práctica — Ecuaciones cuadráticas</div>
+                <div class="pendiente-meta">Matemática · Vence HOY 11:59 PM</div>
+              </div>
+              <span class="badge badge-rojo" style="margin-left:auto;white-space:nowrap">Urgente</span>
+            </div>
+            <div class="pendiente-item">
+              <div class="pendiente-dot" style="background:var(--rojo)"></div>
+              <div>
+                <div class="pendiente-titulo">Resumen — Independencia del Perú</div>
+                <div class="pendiente-meta">Historia · Vence HOY 11:59 PM</div>
+              </div>
+              <span class="badge badge-rojo" style="margin-left:auto;white-space:nowrap">Urgente</span>
+            </div>
+            <div class="pendiente-item">
+              <div class="pendiente-dot" style="background:var(--naranja)"></div>
+              <div>
+                <div class="pendiente-titulo">Informe — Experimento de densidad</div>
+                <div class="pendiente-meta">Ciencia y Tecnología · Vence en 3 días</div>
+              </div>
+              <span class="badge badge-naranja" style="margin-left:auto;white-space:nowrap">Próximo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mis notas -->
+        <div class="card">
+          <div class="card-header"><h3>📊 Mis notas del bimestre</h3></div>
+          <div class="card-body">
+            <div class="notas-grid">
+              <div class="nota-box">
+                <div class="nota-curso">Matemática</div>
+                <div class="nota-val nota-aprobado">16</div>
+                <div class="nota-estado nota-aprobado">Aprobado</div>
+              </div>
+              <div class="nota-box">
+                <div class="nota-curso">Comunicación</div>
+                <div class="nota-val nota-aprobado">14</div>
+                <div class="nota-estado nota-aprobado">Aprobado</div>
+              </div>
+              <div class="nota-box">
+                <div class="nota-curso">Ciencia</div>
+                <div class="nota-val nota-aprobado">18</div>
+                <div class="nota-estado nota-aprobado">Aprobado</div>
+              </div>
+              <div class="nota-box">
+                <div class="nota-curso">Historia</div>
+                <div class="nota-val" style="color:var(--naranja)">11</div>
+                <div class="nota-estado" style="color:var(--naranja)">En riesgo</div>
+              </div>
+              <div class="nota-box">
+                <div class="nota-curso">Inglés</div>
+                <div class="nota-val nota-aprobado">15</div>
+                <div class="nota-estado nota-aprobado">Aprobado</div>
+              </div>
+              <div class="nota-box">
+                <div class="nota-curso">Ed. Física</div>
+                <div class="nota-val nota-aprobado">17</div>
+                <div class="nota-estado nota-aprobado">Aprobado</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PANEL ADMIN ====== -->
+<div id="admin" class="screen">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span>EduMVL</span>
+      <small>Administración</small>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:#1e7e34">DR</div>
+      <div class="sidebar-user-info">
+        <strong>Dir. Roberto Salcedo</strong>
+        <span>Administrador</span>
+      </div>
+    </div>
+    <nav class="sidebar-menu">
+      <div class="menu-label">Gestión</div>
+      <div class="menu-item active">
+        <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/></svg>
+        Panel general
+      </div>
+      <div class="menu-item">
+        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="currentColor"/></svg>
+        Usuarios
+      </div>
+      <div class="menu-item">
+        <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z" fill="currentColor"/></svg>
+        Cursos y secciones
+      </div>
+      <div class="menu-item">
+        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" fill="currentColor"/></svg>
+        Roles y accesos
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-salir" onclick="showScreen('login')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <h2>Panel de Administración</h2>
+      <div class="topbar-right">
+        <button class="btn-nuevo">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          Nuevo usuario
+        </button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon azul"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
+          <div class="stat-val">1,248</div>
+          <div class="stat-label">Estudiantes activos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon verde"><svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg></div>
+          <div class="stat-val">34</div>
+          <div class="stat-label">Docentes activos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon naranja"><svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg></div>
+          <div class="stat-val">28</div>
+          <div class="stat-label">Secciones</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon rojo"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg></div>
+          <div class="stat-val">3</div>
+          <div class="stat-label">Cuentas suspendidas</div>
+        </div>
+      </div>
+
+      <!-- Tabla usuarios -->
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-header">
+          <h3>👥 Usuarios del sistema</h3>
+          <a href="#">Ver todos</a>
+        </div>
+        <div class="card-body users-table-wrap" style="padding:0">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Correo institucional</th>
+                <th>Rol</th>
+                <th>Grado / Sección</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:8px"><div class="asist-av" style="background:#2457a4;width:28px;height:28px;font-size:11px">MR</div>María Ríos</div></td>
+                <td>m.rios@mariovargasllosa.edu.pe</td>
+                <td><span class="badge badge-azul">Profesor</span></td>
+                <td>4°A, 4°B, 5°A</td>
+                <td><span class="badge badge-verde">Activo</span></td>
+                <td><div style="display:flex;gap:6px"><button class="action-btn edit">Editar</button><button class="action-btn del">Suspender</button></div></td>
+              </tr>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:8px"><div class="asist-av" style="background:#1e7e34;width:28px;height:28px;font-size:11px">CH</div>Carlos Huanca</div></td>
+                <td>c.huanca@mariovargasllosa.edu.pe</td>
+                <td><span class="badge badge-azul">Profesor</span></td>
+                <td>3°A, 3°B, 4°A</td>
+                <td><span class="badge badge-verde">Activo</span></td>
+                <td><div style="display:flex;gap:6px"><button class="action-btn edit">Editar</button><button class="action-btn del">Suspender</button></div></td>
+              </tr>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:8px"><div class="asist-av" style="background:#e67e22;width:28px;height:28px;font-size:11px">CL</div>Camila Llerena</div></td>
+                <td>c.llerena@mariovargasllosa.edu.pe</td>
+                <td><span class="badge badge-naranja">Estudiante</span></td>
+                <td>4°A</td>
+                <td><span class="badge badge-verde">Activo</span></td>
+                <td><div style="display:flex;gap:6px"><button class="action-btn edit">Editar</button><button class="action-btn del">Suspender</button></div></td>
+              </tr>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:8px"><div class="asist-av" style="background:#c0392b;width:28px;height:28px;font-size:11px">JP</div>Juan Puma</div></td>
+                <td>j.puma@mariovargasllosa.edu.pe</td>
+                <td><span class="badge badge-naranja">Estudiante</span></td>
+                <td>3°B</td>
+                <td><span class="badge badge-rojo">Suspendido</span></td>
+                <td><div style="display:flex;gap:6px"><button class="action-btn edit">Editar</button><button class="action-btn" style="border-color:var(--verde);color:var(--verde)">Activar</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Cursos -->
+      <div class="card">
+        <div class="card-header">
+          <h3>📚 Cursos y asignación de docentes</h3>
+          <a href="#">Nuevo curso</a>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table>
+            <thead><tr><th>Curso</th><th>Sección</th><th>Docente asignado</th><th>Alumnos</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>Matemática</td><td>4°A</td><td>Prof. María Ríos</td><td>29</td><td><span class="badge badge-verde">Activo</span></td></tr>
+              <tr><td>Comunicación</td><td>4°A</td><td>Prof. Carlos Huanca</td><td>29</td><td><span class="badge badge-verde">Activo</span></td></tr>
+              <tr><td>Historia</td><td>3°B</td><td><span style="color:var(--rojo);font-size:12px">⚠ Sin asignar</span></td><td>31</td><td><span class="badge badge-naranja">Pendiente</span></td></tr>
+              <tr><td>Ciencia y Tecnología</td><td>5°A</td><td>Prof. Rosa Ticona</td><td>27</td><td><span class="badge badge-verde">Activo</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV DEMO -->
+<div class="demo-nav">
+  <span style="color:rgba(255,255,255,0.5);font-size:11px;padding:6px 4px">Vista:</span>
+  <button onclick="showScreen('login')" id="btn-login">🔐 Login</button>
+  <button onclick="showScreen('profe')" id="btn-profe">👩‍🏫 Profesor</button>
+  <button onclick="showScreen('alumno')" id="btn-alumno">🎒 Alumno</button>
+  <button onclick="showScreen('admin')" id="btn-admin">⚙️ Admin</button>
+</div>
+
+<script>
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.demo-nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + id).classList.add('active');
+    window.scrollTo(0,0);
+  }
+  showScreen('login');
+</script>
+</body>
+</html>
